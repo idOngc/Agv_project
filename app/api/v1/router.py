@@ -1,5 +1,5 @@
 """
-v1 \u8def\u7531\u805a\u5408\u5165\u53e3\u3002\u65b0\u589e\u4e1a\u52a1\u8fd9\u91cc include_router \u5373\u53ef\u3002
+v1 路由聚合入口。新增业务这里 include_router 即可。
 """
 
 from fastapi import APIRouter

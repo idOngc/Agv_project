@@ -1,7 +1,7 @@
 """
-\u4e1a\u52a1\u5f02\u5e38\u57fa\u7c7b + FastAPI \u5168\u5c40\u5f02\u5e38\u5904\u7406\u5668\u3002
+业务异常基类 + FastAPI 全局异常处理器。
 
-\u5728 main.py \u91cc\u8c03 register_exception_handlers(app)\u3002
+在 main.py 里调 register_exception_handlers(app)。
 """
 
 from fastapi import FastAPI, Request
@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 
 
 class AppError(Exception):
-    """\u4e1a\u52a1\u5c42\u53ef\u9884\u671f\u5f02\u5e38\u7684\u57fa\u7c7b\u3002"""
+    """业务层可预期异常的基类。"""
 
     code: int = 1000
     msg: str = "app error"

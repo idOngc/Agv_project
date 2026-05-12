@@ -1,6 +1,6 @@
 """
-AGV \u8bbe\u5907\u8868 \u2014\u2014 \u5bf9\u9f50\u300aAGV \u6570\u636e\u7ed3\u6784\u300b\u6587\u6863\u91cc\u7684 AGV \u5b9a\u4e49\uff0c\u6700\u5c0f\u7248\u53ea\u4fdd\u7559\u8868\u8fbe
-\u8fde\u63a5\u6240\u9700\u7684\u5b57\u6bb5\u3002\u8df3\u8f66 / \u5145\u7535 / \u62fc\u5355 \u9608\u503c\u7b49\u540e\u7eed\u518d\u6dfb\u3002
+AGV 设备表 —— 对齐《AGV 数据结构》文档里的 AGV 定义，最小版只保留表达
+连接所需的字段。跳车 / 充电 / 拼单 阈值等后续再添。
 """
 
 from enum import IntEnum
@@ -10,10 +10,10 @@ from tortoise.models import Model
 
 
 class AGVMode(IntEnum):
-    FORKLIFT = 1    # \u53c9\u8f66
-    JACK = 2        # \u9876\u5347\u8f66
-    TRACTOR = 3     # \u62d6\u8f66
-    FLIPPER = 4     # \u7ffb\u8f6c\u8f66
+    FORKLIFT = 1    # 叉车
+    JACK = 2        # 顶升车
+    TRACTOR = 3     # 拖车
+    FLIPPER = 4     # 翻转车
 
 
 class AGVProtocolType(IntEnum):
@@ -23,22 +23,22 @@ class AGVProtocolType(IntEnum):
 
 class AGV(Model):
     id = fields.IntField(pk=True)
-    uuid = fields.CharField(max_length=64, unique=True, description="\u5168\u5c40\u552f\u4e00 ID (\u4f5c\u4e3a deviceId)")
-    name = fields.CharField(max_length=64, description="\u663e\u793a\u540d, e.g. LPT-AGV-J01")
+    uuid = fields.CharField(max_length=64, unique=True, description="全局唯一 ID (作为 deviceId)")
+    name = fields.CharField(max_length=64, description="显示名, e.g. LPT-AGV-J01")
 
     mode = fields.IntEnumField(AGVMode, default=AGVMode.JACK)
     protocol = fields.IntEnumField(AGVProtocolType, default=AGVProtocolType.TCP_IP)
-    vendor_type = fields.CharField(max_length=32, default="seer_amb", description="\u53a8\u5546\u578b\u53f7")
+    vendor_type = fields.CharField(max_length=32, default="seer_amb", description="厨商型号")
 
     ip = fields.CharField(max_length=64)
-    # \u4ed9\u5de5 AGV \u7aef\u53e3\u8868 (\u53ef\u4ee5\u91cd\u5199): \u72b6\u6001/\u5bfc\u822a/\u63a7\u5236/\u914d\u7f6e/\u63a8\u9001
+    # 仙工 AGV 端口表 (可以重写): 状态/导航/控制/配置/推送
     port_status = fields.IntField(default=19204)
     port_nav = fields.IntField(default=19205)
     port_control = fields.IntField(default=19206)
     port_config = fields.IntField(default=19207)
     port_push = fields.IntField(default=19301)
 
-    is_active = fields.BooleanField(default=True, description="\u662f\u5426\u542f\u7528")
+    is_active = fields.BooleanField(default=True, description="是否启用")
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

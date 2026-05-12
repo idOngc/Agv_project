@@ -1,3 +1,3 @@
 """
-\u5145\u7535\u6869\u8fde\u63a5\u5b50\u5305 (\u5360\u4f4d) \u2014\u2014 \u540e\u7eed\u63a5\u5165\u666e\u901a\u6869 / \u65bd\u80fd sn_acs (modbus tcp)\u3002
+充电桩连接子包 (占位) —— 后续接入普通桩 / 施能 sn_acs (modbus tcp)。
 """

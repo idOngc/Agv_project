@@ -1,11 +1,11 @@
 """
-\u591a\u53f0 AGV \u8fde\u63a5\u6c60 / \u5168\u5c40\u5355\u4f8b \u2014\u2014 \u4e0b\u4e00\u6b65\u5b9e\u73b0\u3002
+多台 AGV 连接池 / 全局单例 —— 下一步实现。
 
-\u804c\u8d23:
-  - \u542f\u52a8\u65f6\u4ece\u6570\u636e\u5e93\u52a0\u8f7d\u6240\u6709 is_active=True \u7684 AGV\uff0c\u6309\u7167 ip:port \u5e76\u53d1\u8fde\u63a5
-  - \u4e0a\u5c42 service \u901a\u8fc7 get(agv_uuid) -> SeerAPI \u62ff\u5230\u8fde\u63a5\u53e5\u67c4
-  - close_all() \u5728 lifespan shutdown \u65f6\u88ab\u8c03
-  - \u70ed\u589e/\u70ed\u5220 (AGV \u88ab\u542f\u7528/\u7981\u7528\u65f6\u540c\u6b65\u52a0\u5165/\u9000\u51fa\u8fde\u63a5\u6c60)
+职责:
+  - 启动时从数据库加载所有 is_active=True 的 AGV，按照 ip:port 并发连接
+  - 上层 service 通过 get(agv_uuid) -> SeerAPI 拿到连接句柄
+  - close_all() 在 lifespan shutdown 时被调
+  - 热增/热删 (AGV 被启用/禁用时同步加入/退出连接池)
 """
 
 # from __future__ import annotations
@@ -17,4 +17,4 @@
 #     def get(self, agv_uuid: str) -> SeerAPI: ...
 #     async def close_all(self) -> None: ...
 #
-# seer_manager = SeerManager()  # \u5168\u5c40\u5355\u4f8b
+# seer_manager = SeerManager()  # 全局单例

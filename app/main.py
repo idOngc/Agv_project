@@ -1,7 +1,7 @@
 """
-FastAPI \u5165\u53e3 \u2014\u2014 \u8d1f\u8d23 lifespan(\u8d77\u542f/\u5173\u95ed Tortoise + Redis)\u3001\u8def\u7531\u6302\u8f7d\u3001\u5168\u5c40\u5f02\u5e38\u5904\u7406\u3002
+FastAPI 入口 —— 负责 lifespan(起启/关闭 Tortoise + Redis)、路由挂载、全局异常处理。
 
-\u542f\u52a8:
+启动:
     uvicorn app.main:app --reload
 """
 
@@ -32,7 +32,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     log.info("Tortoise connected.")
     await init_redis()
 
-    # TODO: \u540e\u7eed\u5728\u8fd9\u91cc\u542f\u52a8 seer_manager.init_from_db() / status_poller \u7b49
+    # TODO: 后续在这里启动 seer_manager.init_from_db() / status_poller 等
 
     try:
         yield
@@ -53,6 +53,6 @@ register_exception_handlers(app)
 app.include_router(api_router)
 
 
-@app.get("/health", tags=["meta"], summary="\u5065\u5eb7\u68c0\u67e5")
+@app.get("/health", tags=["meta"], summary="健康检查")
 async def health() -> dict:
     return {"status": "ok", "app": settings.APP_NAME, "env": settings.APP_ENV}

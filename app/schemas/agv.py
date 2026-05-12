@@ -1,4 +1,4 @@
-"""AGV \u8d44\u6e90\u7684\u8bf7\u6c42 / \u54cd\u5e94 schema\u3002\u540e\u7eed\u6309\u9700\u6269\u5145\u3002"""
+"""AGV 资源的请求 / 响应 schema。后续按需扩充。"""
 
 from pydantic import BaseModel, Field
 

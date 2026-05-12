@@ -1,7 +1,7 @@
 """
-\u540e\u53f0 asyncio \u4efb\u52a1 (lifespan \u542f\u52a8/\u6536\u5c3e)\u3002
+后台 asyncio 任务 (lifespan 启动/收尾)。
 
-\u62df\u53d1\u5b58\u4efb\u52a1:
-  - status_poller.py   \u8f6e\u8be2 AGV \u72b6\u6001 (\u5fc3\u8df3 + 1Hz \u4f4d\u59ff)
-  - task_monitor.py    \u8f6e\u8be2\u4efb\u52a1\u8fdb\u5ea6\uff0c\u72b6\u6001\u6d41\u8f6c
+拟发存任务:
+  - status_poller.py   轮询 AGV 状态 (心跳 + 1Hz 位姿)
+  - task_monitor.py    轮询任务进度，状态流转
 """

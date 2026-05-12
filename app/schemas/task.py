@@ -1,4 +1,4 @@
-"""\u4efb\u52a1\u4e0b\u53d1 / \u67e5\u8be2 schema\u3002\u4e0e models/task.py \u4fdd\u6301\u4e00\u81f4\u3002"""
+"""任务下发 / 查询 schema。与 models/task.py 保持一致。"""
 
 from datetime import datetime
 from typing import Any
@@ -9,9 +9,9 @@ from app.models.task import TaskStatus, TaskType
 
 
 class TaskCreateIn(BaseModel):
-    agv_uuid: str = Field(..., description="\u76ee\u6807 AGV \u7684 uuid")
+    agv_uuid: str = Field(..., description="目标 AGV 的 uuid")
     type: TaskType = TaskType.NAVIGATE
-    target_point: str = Field(..., description="\u76ee\u6807\u70b9\u4f4d\u540d, e.g. AP6")
+    target_point: str = Field(..., description="目标点位名, e.g. AP6")
     payload: dict[str, Any] = Field(default_factory=dict)
 
 

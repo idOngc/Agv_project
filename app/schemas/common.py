@@ -1,5 +1,5 @@
 """
-\u901a\u7528\u54cd\u5e94\u4f53 / \u5206\u9875\u53c2\u6570\u3002
+通用响应体 / 分页参数。
 """
 
 from typing import Generic, TypeVar

@@ -1,8 +1,8 @@
 """
-\u8c03\u5ea6\u5c42 \u2014\u2014 \u5168\u5c40\u51b3\u7b56(\u6700\u8fd1\u8f66 / \u4ea4\u901a\u7ba1\u5236 / \u62fc\u8f66 / \u81ea\u52a8\u5145\u7535)\u3002
+调度层 —— 全局决策(最近车 / 交通管制 / 拼车 / 自动充电)。
 
-\u6700\u5c0f\u7248\u672a\u5b9e\u73b0\u3002\u672a\u6765\u62c6\u5206:
-  - dispatcher.py   \u9009\u8f66 (\u6700\u8fd1\u65e0\u4efb\u52a1\u8f66 / 5 \u70b9\u63a2\u70b9\u6cd5)
-  - traffic.py      \u4e92\u65a5\u533a\u57df / \u65b9\u5411\u6388\u6743
-  - charging.py     \u81ea\u52a8\u5145\u7535\u8c03\u5ea6
+最小版未实现。未来拆分:
+  - dispatcher.py   选车 (最近无任务车 / 5 点探点法)
+  - traffic.py      互斥区域 / 方向授权
+  - charging.py     自动充电调度
 """
