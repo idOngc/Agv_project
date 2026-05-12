@@ -1,0 +1,25 @@
+# --- Web 框架 ---
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+python-multipart>=0.0.9         # OAuth2 password flow 表单解析
+
+# --- 配置与校验 ---
+pydantic>=2.7,<3.0
+pydantic-settings>=2.3,<3.0
+
+# --- 数据库 ---
+tortoise-orm>=0.21,<1.0
+asyncmy>=0.2.9,<1.0             # MySQL 异步驱动 (比 aiomysql 快)
+aerich>=0.7,<1.0                # Tortoise 迁移工具
+
+# --- 缓存 ---
+redis>=5.0,<6.0                 # 内置 redis.asyncio
+
+# --- 安全 ---
+python-jose[cryptography]>=3.3,<4.0
+passlib[bcrypt]>=1.7,<2.0
+
+# --- 开发与测试 ---
+pytest>=8.0
+pytest-asyncio>=0.23
+httpx>=0.27                     # FastAPI TestClient 依赖
