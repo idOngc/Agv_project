@@ -60,3 +60,4 @@ app.include_router(api_router)
 @app.get("/health", tags=["meta"], summary="健康检查")
 async def health() -> dict:
     return {"status": "ok", "app": settings.APP_NAME, "env": settings.APP_ENV}
+

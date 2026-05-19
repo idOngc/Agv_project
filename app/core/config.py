@@ -22,15 +22,15 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "AGV Scheduler"
     APP_ENV: str = "dev"
-    APP_HOST: str = "0.0.0.0"
+    APP_HOST: str = "127.0.0.1"
     APP_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
     MYSQL_HOST: str = "127.0.0.1"
     MYSQL_PORT: int = 3306
-    MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = ""
-    MYSQL_DB: str = "agv_scheduler"
+    MYSQL_USER: str = "idOng"
+    MYSQL_PASSWORD: str = "idOngc"
+    MYSQL_DB: str = "agv_project"
 
     REDIS_HOST: str = "127.0.0.1"
     REDIS_PORT: int = 6379
