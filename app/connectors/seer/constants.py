@@ -1,21 +1,21 @@
 """
-\u4ed9\u5de5 (SEER) Robokit \u7f51\u7edc\u534f\u8bae\u5e38\u91cf\u8868\u3002
+仙工 (SEER) Robokit 网络协议常量表。
 
-\u6570\u636e\u6765\u6e90\uff1a\u4ed9\u5de5\u5b98\u65b9\u4ed3\u5e93 (\u4ec5\u4f9b\u53c2\u8003\uff0c\u540e\u7eed\u4ee5\u300aRobokit Netprotocol\u300b\u6587\u6863\u4e3a\u51c6):
+数据来源：仙工官方仓库 (仅供参考，后续以《Robokit Netprotocol》文档为准):
     https://github.com/seer-robotics/Robokit_TCP_API_py
-    https://github.com/seer-robotics/robokit_netprotocol_l   (\u4e2d\u6587\u8be6\u7ec6\u624b\u518c)
+    https://github.com/seer-robotics/robokit_netprotocol_l   (中文详细手册)
 
-\u534f\u8bae\u62a5\u6587\u5934 (\u4e0e protocol.py \u4e2d HEADER_FMT \u4e00\u81f4):
-    | 0x5A | Version(1B) | reqId(2B,BE) | jsonLen(4B,BE) | msgType(2B,BE) | reserved(6B) |
-    \u540e\u63a5 jsonLen \u5b57\u8282 UTF-8 JSON \u4f53
+协议报文头（与 `protocol.py` 中 `HEADER_FMT` 一致）:
+    | 0x5A | 版本(1B) | 请求ID(2B,BE) | JSON长度(4B,BE) | 消息类型(2B,BE) | 保留位(6B) |
+    后接 `jsonLen` 字节 UTF-8 JSON 数据体
 
-\u7aef\u53e3 \u2194 API \u53f7\u6bb5\u8def\u7531\u89c4\u5219:
-    1000-1999  \u2192 19204 (STATE)    \u72b6\u6001\u67e5\u8be2
-    2000-2999  \u2192 19205 (CTRL)     \u63a7\u5236
-    3000-3999  \u2192 19206 (TASK)     \u4efb\u52a1 / \u5bfc\u822a
-    4000-5999  \u2192 19207 (CONFIG)   \u914d\u7f6e\u7ba1\u7406
-    5100-5199  \u2192 19208 (KERNEL)   daemon \u6587\u4ef6\u4f20\u8f93 (ls/scp/rm)
-    6000-6998  \u2192 19210 (OTHER)    \u6742\u9879 (DO/IO \u7b49)
+端口 ↔ API 号段路由规则:
+    1000-1999  → 19204（状态端口）   状态查询
+    2000-2999  → 19205（控制端口）   控制命令
+    3000-3999  → 19206（任务端口）   任务 / 导航
+    4000-5999  → 19207（配置端口）   配置管理
+    5100-5199  → 19208（内核端口）   守护进程文件传输（ls/scp/rm）
+    6000-6998  → 19210（其他端口）   杂项（DO/IO 等）
 """
 
 from __future__ import annotations
@@ -23,68 +23,68 @@ from __future__ import annotations
 from enum import IntEnum
 
 
-# ───────────────────────── \u7aef\u53e3 ─────────────────────────
+# ───────────────────────── 端口 ─────────────────────────
 
 class SeerPort(IntEnum):
-    """\u4ed9\u5de5 Robokit \u5404\u529f\u80fd\u7aef\u53e3 (\u4e0e\u5b98\u65b9 rbkNetProtoEnums.py \u4e00\u81f4)\u3002"""
-    ROBOD = 19200    # robod \u540e\u53f0\u670d\u52a1
-    STATE = 19204    # \u72b6\u6001\u67e5\u8be2 (1000-1999)
-    CTRL = 19205     # \u63a7\u5236 (2000-2999)
-    TASK = 19206     # \u4efb\u52a1 / \u5bfc\u822a (3000-3999)
-    CONFIG = 19207   # \u914d\u7f6e (4000-5999)
-    KERNEL = 19208   # \u5185\u6838 / daemon (5100-5199)
-    OTHER = 19210    # \u6742\u9879 (6000-6998)
+    """仙工 Robokit 各功能端口 (与官方 rbkNetProtoEnums.py 一致)。"""
+    ROBOD = 19200    # robod 后台服务
+    STATE = 19204    # 状态查询 (1000-1999)
+    CTRL = 19205     # 控制 (2000-2999)
+    TASK = 19206     # 任务 / 导航 (3000-3999)
+    CONFIG = 19207   # 配置 (4000-5999)
+    KERNEL = 19208   # 内核 / 守护进程 (5100-5199)
+    OTHER = 19210    # 杂项 (6000-6998)
 
 
-# ────────────────────── msg_type \u5e38\u7528 API \u53f7 ──────────────────────
-# \u8fd9\u91cc\u4ec5\u5217\u5b9e\u9645\u5728\u5b98\u65b9 Python demo \u91cc\u51fa\u73b0\u8fc7 / \u88ab\u660e\u786e\u70b9\u540d\u7684 API \u53f7\u3002
-# \u540e\u7eed\u9700\u8981\u54ea\u4e2a\u518d\u52a0\u54ea\u4e2a\uff0c\u4e0d\u4e00\u6b21\u6027\u52a0\u4e00\u5806\u62a5\u6587\u91cc\u4ece\u672a\u7528\u8fc7\u7684\u3002
+# ────────────────────── msg_type 常用 API 号 ──────────────────────
+# 这里仅列实际在官方 Python 示例 里出现过 / 被明确点名的 API 号。
+# 后续需要哪个再加哪个，不一次性加一堆报文里从未用过的。
 
 class StateMsg(IntEnum):
-    """\u72b6\u6001\u67e5\u8be2 (\u7aef\u53e3 19204)\u3002"""
-    INFO_REQ = 1000        # robot \u57fa\u672c\u4fe1\u606f (\u578b\u53f7 / SN \u7b49)
-    RUN_REQ = 1002         # \u8fd0\u884c\u72b6\u6001 (\u662f\u5426\u52a8\u4f5c / \u662f\u5426\u963b\u6321 \u7b49)
-    MODE_REQ = 1003        # \u5f53\u524d\u6a21\u5f0f (\u624b\u52a8 / \u81ea\u52a8)
-    LOC_REQ = 1004         # \u4f4d\u59ff (x, y, angle, current_station ...)
-    SPEED_REQ = 1005       # \u901f\u5ea6 (vx, vy, w)
-    BATTERY_REQ = 1007     # \u7535\u91cf (battery_level \u7b49\uff0c\u53ef\u9644 {"simple": true})
-    AREA_REQ = 1011        # \u533a\u57df\u4fe1\u606f
-    IO_RES = 1013          # IO \u4e0a\u62a5
-    TASK_REQ = 1020        # \u5f53\u524d\u4efb\u52a1\u72b6\u6001
-    ALARM_RES = 1050       # \u544a\u8b66 \u4e0a\u62a5
-    ALL1_REQ = 1100        # all-in-one \u72b6\u6001 \u5feb\u7167
+    """状态查询 (端口 19204)。"""
+    INFO_REQ = 1000        # 机器人基本信息 (型号 / SN 等)
+    RUN_REQ = 1002         # 运行状态 (是否动作 / 是否阻挡 等)
+    MODE_REQ = 1003        # 当前模式 (手动 / 自动)
+    LOC_REQ = 1004         # 位姿 (x, y, angle, current_station ...)
+    SPEED_REQ = 1005       # 速度 (vx, vy, w)
+    BATTERY_REQ = 1007     # 电量 (battery_level 等，可附 {"simple": true})
+    AREA_REQ = 1011        # 区域信息
+    IO_RES = 1013          # IO 上报
+    TASK_REQ = 1020        # 当前任务状态
+    ALARM_RES = 1050       # 告警 上报
+    ALL1_REQ = 1100        # all-in-one 状态 快照
 
 
 class CtrlMsg(IntEnum):
-    """\u63a7\u5236 (\u7aef\u53e3 19205)\u3002"""
-    RELOC_REQ = 2002       # \u91cd\u5b9a\u4f4d {"x": ..., "y": ..., "angle": ...}
-    MOTION_REQ = 2010      # \u8fd0\u52a8\u63a7\u5236 {"vx": .., "vy": .., "w": ..}
+    """控制 (端口 19205)。"""
+    RELOC_REQ = 2002       # 重定位 {"x": ..., "y": ..., "angle": ...}
+    MOTION_REQ = 2010      # 运动控制 {"vx": .., "vy": .., "w": ..}
 
 
 class TaskMsg(IntEnum):
-    """\u4efb\u52a1 / \u5bfc\u822a (\u7aef\u53e3 19206)\u3002"""
-    GOTARGET_REQ = 3051    # \u524d\u5f80\u76ee\u6807\u70b9 {"id": "AP1", "source_id": "...", "task_id": "..."}
+    """任务 / 导航 (端口 19206)。"""
+    GOTARGET_REQ = 3051    # 前往目标点 {"id": "AP1", "source_id": "...", "task_id": "..."}
 
 
 class KernelMsg(IntEnum):
-    """daemon (\u7aef\u53e3 19208)\u3002\u8c03\u8bd5 / \u8fd0\u7ef4\u7528\uff0c\u4e1a\u52a1\u7aef\u4e00\u822c\u4e0d\u52a8\u3002"""
+    """守护进程 (端口 19208)。用于调试 / 运维，业务侧一般不直接调用。"""
     DAEMON_LS_REQ = 5100
     DAEMON_SCP_REQ = 5101
     DAEMON_RM_REQ = 5102
 
 
 class OtherMsg(IntEnum):
-    """\u6742\u9879 (\u7aef\u53e3 19210)\u3002"""
-    SETDO_REQ = 6001       # \u8bbe\u7f6e\u6570\u5b57\u8f93\u51fa
+    """杂项 (端口 19210)。"""
+    SETDO_REQ = 6001       # 设置数字输出
 
 
-# ────────────────────── msg_type \u2192 \u7aef\u53e3 \u8def\u7531 ──────────────────────
+# ────────────────────── msg_type → 端口 路由 ──────────────────────
 
 def port_for(msg_type: int) -> SeerPort:
     """
-    \u6839\u636e msg_type \u8fd4\u56de\u5e94\u8be5\u8d70\u54ea\u4e2a\u7aef\u53e3\u3002
+    根据 msg_type 返回应该走哪个端口。
 
-    \u8fd9\u4e2a\u51fd\u6570\u662f\u8fde\u63a5\u5c42\u8def\u7531\u7684\u552f\u4e00\u6743\u5a01\u6e90\uff0c\u4e0a\u5c42\u4e0d\u7ba1\u8fde\u54ea\u4e2a socket\u3002
+    这个函数是连接层路由的唯一权威来源，上层不关心连接哪个 socket。
 
     >>> port_for(1004)
     <SeerPort.STATE: 19204>
@@ -108,8 +108,8 @@ def port_for(msg_type: int) -> SeerPort:
     raise ValueError(f"Unknown SEER msg_type: {msg_type}")
 
 
-# \u5176\u5b83\u9ed8\u8ba4\u53c2\u6570
+# 其它默认参数
 
-DEFAULT_REQ_TIMEOUT: float = 5.0       # \u5355\u6b21\u8bf7\u6c42\u8d85\u65f6 (\u79d2)
-RECV_BUFFER_SIZE: int = 4096            # \u5355\u6b21 recv \u8bfb\u53d6\u4e0a\u9650
-HEARTBEAT_INTERVAL: float = 3.0         # \u5fc3\u8df3\u8f6e\u8be2\u95f4\u9694 (\u79d2)
+DEFAULT_REQ_TIMEOUT: float = 5.0       # 单次请求超时 (秒)
+RECV_BUFFER_SIZE: int = 4096            # 单次 recv 读取上限
+HEARTBEAT_INTERVAL: float = 3.0         # 心跳轮询间隔 (秒)
