@@ -1,15 +1,17 @@
-"""AGV 资源的请求 / 响应 schema。后续按需扩充。"""
+"""AGV 资源的请求 / 响应 schema。字段命名与 models.agv.AGV 保持一致。"""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class AGVCreateIn(BaseModel):
     uuid: str
     name: str
     ip: str
-    port_status: int = 19204
-    port_nav: int = 19205
-    port_control: int = 19206
+    port_state: int = 19204
+    port_ctrl: int = 19205
+    port_task: int = 19206
+    port_config: int = 19207
+    port_other: int = 19210
 
 
 class AGVOut(BaseModel):

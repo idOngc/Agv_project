@@ -1,5 +1,11 @@
 """
-Redis 客户端封装 —— 单例,异步,在 lifespan 启动期初始化。
+Redis 客户端封装 —— 单例, 异步, 在 lifespan 启动期初始化。
+
+⚠️ 当前阶段未启用：requirements.txt 里的 redis 依赖被注释了，main.py 也没调
+init_redis()。要启用步骤:
+  1) requirements.txt 取消 `redis` 注释并 pip install -r
+  2) main.py 把所有 `# REDIS:` 注释取消
+  3) 业务代码就可以 `from app.db.redis import get_redis`
 
 约定:
   - 状态缓存键: `agv:{agv_id}:status`
@@ -10,7 +16,11 @@ from __future__ import annotations
 
 import logging
 
-from redis.asyncio import Redis, from_url
+try:
+    from redis.asyncio import Redis, from_url  # type: ignore[import-not-found]
+except ImportError:  # 依赖未安装时不影响其它模块导入
+    Redis = None  # type: ignore[assignment,misc]
+    from_url = None  # type: ignore[assignment]
 
 from app.core.config import settings
 

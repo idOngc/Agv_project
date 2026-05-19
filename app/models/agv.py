@@ -28,15 +28,16 @@ class AGV(Model):
 
     mode = fields.IntEnumField(AGVMode, default=AGVMode.JACK)
     protocol = fields.IntEnumField(AGVProtocolType, default=AGVProtocolType.TCP_IP)
-    vendor_type = fields.CharField(max_length=32, default="seer_amb", description="厨商型号")
+    vendor_type = fields.CharField(max_length=32, default="seer_amb", description="厂商型号")
 
     ip = fields.CharField(max_length=64)
-    # 仙工 AGV 端口表 (可以重写): 状态/导航/控制/配置/推送
-    port_status = fields.IntField(default=19204)
-    port_nav = fields.IntField(default=19205)
-    port_control = fields.IntField(default=19206)
-    port_config = fields.IntField(default=19207)
-    port_push = fields.IntField(default=19301)
+    # 仙工 Robokit 端口表（与 connectors.seer.constants.SeerPort 一致）。
+    # 字段命名采用官方 API_PORT_STATE / CTRL / TASK / CONFIG / OTHER。
+    port_state = fields.IntField(default=19204, description="状态查询 (1000-1999)")
+    port_ctrl = fields.IntField(default=19205, description="控制 (2000-2999)")
+    port_task = fields.IntField(default=19206, description="任务/导航 (3000-3999)")
+    port_config = fields.IntField(default=19207, description="配置 (4000-5999)")
+    port_other = fields.IntField(default=19210, description="杂项 (6000-6998)")
 
     is_active = fields.BooleanField(default=True, description="是否启用")
 
