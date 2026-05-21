@@ -1,7 +1,7 @@
 """
 仙工 (SEER) Robokit 网络协议常量表。
 
-数据来源：仙工官方仓库 (仅供参考,后续以《Robokit Netprotocol》文档为准):
+数据来源:仙工官方仓库 (仅供参考,后续以《Robokit Netprotocol》文档为准):
     https://github.com/seer-robotics/Robokit_TCP_API_py
     https://github.com/seer-robotics/robokit_netprotocol_l   (中文详细手册)
 

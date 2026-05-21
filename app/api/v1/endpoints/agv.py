@@ -1,19 +1,103 @@
 """
-AGV 资源 CRUD 占位。下一步补完。
+AGV 资源接口。
+
+- GET    /api/v1/agvs              列表
+- POST   /api/v1/agvs              新增
+- GET    /api/v1/agvs/{uuid}       详情
+- PATCH  /api/v1/agvs/{uuid}       部分更新
+- DELETE /api/v1/agvs/{uuid}       软删 (is_active=False)
+- DELETE /api/v1/agvs/{uuid}?hard=true   硬删 (仅 admin)
+- POST   /api/v1/agvs/{uuid}/ping  测试通信
+- GET    /api/v1/agvs/{uuid}/status 实时状态快照
+
+通信类接口在 SEER 连接层实装完成后接入 (本文件最后两个函数体)。
 """
 
-from fastapi import APIRouter, HTTPException, status
+from __future__ import annotations
 
-from app.schemas.agv import AGVCreateIn, AGVOut
+from fastapi import APIRouter, Depends, Query, status
+
+from app.api.deps import get_current_user, require_admin_dep
+from app.models.user import User
+from app.schemas.agv import AGVCreateIn, AGVOut, AGVUpdateIn
+from app.services import agv_service
 
 router = APIRouter()
 
 
-@router.get("", response_model=list[AGVOut], summary="列表 AGV (占位)")
-async def list_agvs() -> list[AGVOut]:
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "TODO")
+@router.get("", response_model=list[AGVOut], summary="列出全部 AGV")
+async def list_agvs(
+    include_disabled: bool = Query(True, description="是否包含已禁用的 AGV"),
+    _: User = Depends(get_current_user),
+) -> list[AGVOut]:
+    agvs = await agv_service.list_agvs(include_disabled=include_disabled)
+    return [AGVOut.model_validate(a) for a in agvs]
 
 
-@router.post("", response_model=AGVOut, summary="新增 AGV (占位)")
-async def create_agv(payload: AGVCreateIn) -> AGVOut:
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "TODO")
+@router.post("", response_model=AGVOut, status_code=status.HTTP_201_CREATED, summary="新增 AGV")
+async def create_agv(
+    payload: AGVCreateIn,
+    _: User = Depends(require_admin_dep),
+) -> AGVOut:
+    agv = await agv_service.create_agv(payload.model_dump())
+    return AGVOut.model_validate(agv)
+
+
+@router.get("/{uuid}", response_model=AGVOut, summary="AGV 详情")
+async def get_agv(
+    uuid: str,
+    _: User = Depends(get_current_user),
+) -> AGVOut:
+    agv = await agv_service.get_agv(uuid)
+    return AGVOut.model_validate(agv)
+
+
+@router.patch("/{uuid}", response_model=AGVOut, summary="部分更新 AGV")
+async def update_agv(
+    uuid: str,
+    payload: AGVUpdateIn,
+    _: User = Depends(require_admin_dep),
+) -> AGVOut:
+    agv = await agv_service.update_agv(uuid, payload.model_dump(exclude_unset=True))
+    return AGVOut.model_validate(agv)
+
+
+@router.delete("/{uuid}", summary="删除 AGV(默认软删,hard=true 走硬删)")
+async def delete_agv(
+    uuid: str,
+    hard: bool = Query(False, description="true 时彻底删除记录"),
+    user: User = Depends(require_admin_dep),
+) -> dict:
+    if hard:
+        await agv_service.delete_agv_hard(uuid)
+        return {"deleted": uuid, "hard": True}
+    await agv_service.disable_agv(uuid)
+    return {"deleted": uuid, "hard": False}
+
+
+# ─────────────────────────────────────────────────────────────────
+# 通信类接口 —— 依赖 SEER 连接层
+# 实装顺序: SeerTcpClient → SeerAPI → SeerManager → 这里
+# ─────────────────────────────────────────────────────────────────
+
+
+@router.post("/{uuid}/ping", summary="测试与 AGV 的通信(发 INFO_REQ 看响应)")
+async def ping_agv(
+    uuid: str,
+    _: User = Depends(get_current_user),
+) -> dict:
+    from app.connectors.seer.manager import seer_manager
+
+    agv = await agv_service.get_agv(uuid)
+    return await seer_manager.ping(agv)
+
+
+@router.get("/{uuid}/status", summary="AGV 实时状态快照(电量/位置/速度/任务)")
+async def get_agv_status(
+    uuid: str,
+    _: User = Depends(get_current_user),
+) -> dict:
+    from app.connectors.seer.manager import seer_manager
+
+    agv = await agv_service.get_agv(uuid)
+    return await seer_manager.snapshot(agv)

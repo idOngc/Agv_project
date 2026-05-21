@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from tortoise import Tortoise
 
 from app.api.v1.router import api_router
+from app.connectors.seer.manager import seer_manager
 from app.core.config import settings
 from app.core.logging import setup_logging
 # REDIS: from app.db.redis import close_redis, init_redis
@@ -30,19 +31,20 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """生命周期：启动时连接 MySQL,关闭时断开。"""
+    """生命周期:启动时连接 MySQL,关闭时断开。"""
     log.info("=== %s starting (env=%s) ===", settings.APP_NAME, settings.APP_ENV)
     await Tortoise.init(config=TORTOISE_ORM)
     log.info("Tortoise connected.")
     # REDIS: await init_redis()
 
-    # TODO: 后续在这里启动 seer_manager.init_from_db() / status_poller 等
+    # 注: SEER 连接走懒连接策略,这里不需要主动 init_from_db。
+    # TODO: 状态轮询 worker 在这里启动
 
     try:
         yield
     finally:
         log.info("=== shutting down ===")
-        # TODO: await seer_manager.close_all()
+        await seer_manager.close_all()
         # REDIS: await close_redis()
         await Tortoise.close_connections()
 

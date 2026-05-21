@@ -99,12 +99,70 @@ copy .env.example .env
 aerich init -t app.db.tortoise_conf.TORTOISE_ORM
 aerich init-db
 
-# 5. 启动开发服务
+# 5. 写入初始账号 (首次运行)
+python -m scripts.seed_users
+# 默认两个账号:
+#   admin / admin123    (角色 admin, 可增删 AGV)
+#   operator / op123    (角色 operator, 只读 + 测通信)
+# 改密码: 编辑 scripts/seed_users.py 里的 SEED_USERS 后:
+#   python -m scripts.seed_users --reset
+
+# 6. 启动开发服务
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # 浏览器打开:
-#   http://localhost:8000/docs    Swagger UI
+#   http://localhost:8000/docs    Swagger UI (有 Authorize 按钮可填 Bearer token)
 #   http://localhost:8000/health  健康检查
+```
+
+## API 速览
+
+> 除 `POST /auth/login` 外,所有接口都需要请求头 `Authorization: Bearer <token>`。
+
+```text
+认证
+  POST   /api/v1/auth/login              用户名+密码换 token (公开)
+  GET    /api/v1/auth/me                 查看当前登录用户
+
+AGV (admin 可写, operator 只读)
+  GET    /api/v1/agvs                    列出全部 AGV
+  POST   /api/v1/agvs                    新增 AGV          [admin]
+  GET    /api/v1/agvs/{uuid}             AGV 详情
+  PATCH  /api/v1/agvs/{uuid}             部分更新          [admin]
+  DELETE /api/v1/agvs/{uuid}             软删 (置 inactive) [admin]
+  DELETE /api/v1/agvs/{uuid}?hard=true   硬删               [admin]
+  POST   /api/v1/agvs/{uuid}/ping        测通信 (发 INFO_REQ)
+  GET    /api/v1/agvs/{uuid}/status      实时状态快照
+
+任务 (待实装,当前 501)
+  POST   /api/v1/tasks                   下发任务
+  GET    /api/v1/tasks/{task_id}         查询任务
+```
+
+### curl 速查
+
+```bash
+# 登录拿 token
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# 之后所有请求带 token
+TOKEN="<上一步返回的 access_token>"
+
+# 添加一台 AGV
+curl -X POST http://localhost:8000/api/v1/agvs \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"uuid":"AGV-001","name":"测试1号","ip":"192.168.1.100"}'
+
+# 测通信
+curl -X POST http://localhost:8000/api/v1/agvs/AGV-001/ping \
+  -H "Authorization: Bearer $TOKEN"
+
+# 实时状态
+curl http://localhost:8000/api/v1/agvs/AGV-001/status \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## 启用 Redis (将来需要再做)
@@ -122,9 +180,20 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - [x] 仙工协议层迁移 (`app/connectors/seer/protocol.py`)
 - [x] 仙工端口表 / msg_type 表对齐官方源 (`constants.py`)
 - [x] Redis 暂时屏蔽
-- [ ] 仙工 TCP 客户端 (`client.py`) + 高层 API (`api.py`)
-- [ ] AGV / Task 模型与 CRUD 接口
-- [ ] 任务下发接口 `POST /api/v1/tasks`
+- [x] 仙工 TCP 客户端 (`client.py`) — 单端口异步,req_id↔Future 配对,自动重连
+- [x] 仙工高层 API (`api.py`) — `ping/get_battery/get_location/snapshot/navigate` 等
+- [x] 连接池 (`manager.py`) — 懒连接,AGV 配置变更自动失效
+- [x] 登录 / JWT / RBAC (admin & operator)
+- [x] AGV 增删改查 + `/ping` 测通信 + `/status` 实时状态
+- [x] 协议层 + 客户端集成测试 (10/10 通过)
+- [ ] 任务下发接口 `POST /api/v1/tasks` (实装中)
 - [ ] WebSocket 实时状态推送
 - [ ] 调度层 (派车 / 交管 / 自动充电)
 - [ ] 前端 Vue
+
+
+
+# 虚拟环境构建
+python3.12 -m venv .env
+source .env/bin/activate
+deactivate
