@@ -14,30 +14,41 @@
 
 ```
 
-HTTP / WebSocket  ← FastAPI 接入层 (api/v1)
+HTTP / WebSocket  # FastAPI 接入层 (api/v1)
 
-Services 任务层 ← 业务编排
+Services 任务层    # 业务编排
 
-Scheduler 调度层  ← 派车/交管/充电决策
+Scheduler 调度层   # 派车/交管/充电决策
 
-Connectors 连接层 ← 仙工/PLC/充电桩
+Connectors 连接层  # 仙工/PLC/充电桩
 
-MySQL 配置/历史/任务
-
-Redis 暂未启用
+MySQL   # 配置/历史/任务
+Redis   # 暂未启用
 
 ```
 
-## 仙工 Robokit 端口与 msg_type 段位
+## 仙工 Robokit 端口与 msg_type 
 
 ```
 1000-1999  →  19204 (STATE)    状态查询
 2000-2999  →  19205 (CTRL)     控制 (运动 / 重定位)
-3000-3999  →  19206 (TASK)     任务 / 导航 (3051=gotarget)
+3000-3999  →  19206 (TASK)     任务 / 导航
 4000-5999  →  19207 (CONFIG)   配置管理
 6000-6998  →  19210 (OTHER)    杂项 (DO/IO 等)
 ```
 
+> 连接层路由由 `connectors.seer.constants.port_for(msg_type)` 统一裁决,
+> 上层不要硬编码端口号。
+
+## 关键约束 (始终遵守)
+
+1. **硬件细节只允许出现在 `app/connectors/`** —— 字节、msg_type、socket、modbus 等。
+   向上只暴露语义化方法 (`navigate()`, `get_status()`, `cancel_task()`)。
+2. `app/services/` 只编排业务流程,不直接 carry 字节。
+3. `app/scheduler/` 做全局决策,输出"派给谁",由 services 调 connectors 落地。
+4. **配置/历史落 MySQL**;实时状态目前也走 MySQL,后续接入 Redis 时再切。
+5. 一台 AGV 多个长连接 (按端口) + 每条连接一个 `asyncio.Task` 收包;
+   `req_id → Future` 字典做请求/响应配对。
 
 ## 目录速览
 
@@ -76,17 +87,19 @@ pip install -r requirements.txt
 
 # 3. 配置环境变量
 copy .env.example .env
+# 编辑 .env 填入 MySQL 实际地址与密码 (REDIS_* 留空也行)
 
-# 4. 初始化数据库
+# 4. 初始化数据库 (第一次运行)
 aerich init -t app.db.tortoise_conf.TORTOISE_ORM
 aerich init-db
 
-# 5. 写入初始账号
+# 5. 写入初始账号 (首次运行)
 python -m scripts.seed_users
 # 默认两个账号:
 #   admin / admin123    (角色 admin, 可增删 AGV)
 #   operator / op123    (角色 operator, 只读 + 测通信)
-
+# 改密码: 编辑 scripts/seed_users.py 里的 SEED_USERS 后:
+#   python -m scripts.seed_users --reset
 
 # 6. 启动开发服务
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
@@ -97,6 +110,18 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 #   http://localhost:8000/docs      Swagger UI
 #   http://localhost:8000/health    健康检查
 ```
+
+## 内置临时控制台 `/web/`
+
+只是为了在 Vue 接入前快速验证后端功能,**Vue 上线后会整体替换掉 `app/web/`**。
+
+- 登录页 (`/web/`) → 用 `admin / admin123` 或 `operator / op123` 登录。
+- 控制台 (`/web/dashboard.html`):
+  - admin 可以「新增 / 删除 AGV」;operator 只能看 + 测通信。
+  - 每行「测通信」按钮调 `POST /api/v1/agvs/{uuid}/ping`,在线时显示延迟。
+  - 「实时状态」按钮调 `GET /api/v1/agvs/{uuid}/status`,弹窗里展示 JSON 快照。
+  - 「全部测连接」会并发对所有启用的 AGV 各发一次 ping。
+- token 存在浏览器 `localStorage.token` 里;401 时自动踢回登录页。
 
 ## 在 Swagger 上测带鉴权的接口
 
@@ -155,6 +180,15 @@ curl -X POST http://localhost:8000/api/v1/agvs/AGV-001/ping \
 # 实时状态
 curl http://localhost:8000/api/v1/agvs/AGV-001/status \
   -H "Authorization: Bearer $TOKEN"
+```
+
+## 启用 Redis (将来需要再做)
+
+```
+1) requirements.txt 取消 `redis>=5.0,<6.0` 那行注释
+   pip install -r requirements.txt
+2) app/main.py 把所有 `# REDIS:` 注释去掉
+3) 业务代码 from app.db.redis import get_redis 直接用
 ```
 
 
